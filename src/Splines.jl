@@ -540,6 +540,10 @@ function find_inverse(fn)
 		return exp
 	elseif fn == exp
 		return log
+	elseif fn == sinh
+		return asinh
+	elseif fn == asinh
+		return sinh
 	else
 		error("Inverse of function '$fn' not implemented here.")
 		return exp
@@ -553,6 +557,10 @@ function find_derivative(fn)
 		return inv
 	elseif fn == exp
 		return exp
+	elseif fn == sinh
+		return cosh
+	elseif fn == asinh
+		return x -> 1 / sqrt(1 + x^2)
 	else
 		error("Derivative of function '$fn' not implemented here.")
 		return exp
