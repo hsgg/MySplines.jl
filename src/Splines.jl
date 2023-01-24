@@ -1,7 +1,7 @@
 # Copyright (c) 2018 Henry S. G. Gebhardt
 
 # This is a module to calculate a Spline.
-
+#
 # TODO:
 # - Derivatives and integrals are not correct in extrapolation region.
 
@@ -18,11 +18,12 @@ export integrate
 
 @enum ExtrapolationType zero=0 boundary=1 linear=2 powerlaw=3 lastpoly=4
 
-mutable struct Spline1D{k,T}
+struct Spline1D{k,T}
     x::Array{T,1}
     y::Array{T,1}
     ypp::Array{T,1}
-    ilast::Int  # for caching
+    ilast::Array{Int,0}  # for caching
+    last_abcdh::Array{T,1}  # for caching
     betainv::Array{T,1} # workspace
     extrapolation::ExtrapolationType
 end
@@ -58,16 +59,17 @@ function Spline1D(x, y; k=3, extrapolation=boundary)
     T = promote_type(eltype(x), eltype(y))
     xin = convert(Array{T,1}, deepcopy(x))
     yin = convert(Array{T,1}, deepcopy(y))
-    spline = Spline1D{k,T}(xin, yin, [], 1, [], extrapolation)
+    spline = Spline1D{k,T}(xin, yin, [], fill(0), [], [], extrapolation)
     #@show spline.extrapolation
     return Spline1D(xin, yin, spline)
 end
 
 
-Spline1D(; k=3, T=Float64, extrapolation=boundary) = Spline1D{k,T}([], [], [], 1, [], extrapolation)
-
+Spline1D(; k=3, T=Float64, extrapolation=boundary) = Spline1D{k,T}([], [], [], fill(0), [], [], extrapolation)
 
 Spline1D(y; kw...) = Spline1D(0:length(y)-1, y; kw...)
+
+(s::Spline1D)(x) = evaluate(s, x)
 
 
 function evaluate(spline::Spline1D, x)
@@ -78,12 +80,8 @@ function evaluate(spline::Spline1D, x)
 end
 
 
-(s::Spline1D)(x) = evaluate(s, x)
-
-
 function evaluate_past_boundary(spl::Spline1D{k,T}, x::Number) where {k,T}
-    idx = (x < spl.x[1]) ? 1 : length(spl.y)
-    #@show x,k,spl.x[1],spl.x[end],length(spl.x),length(spl.y),idx
+    idx = (x <= spl.x[1]) ? 1 : length(spl.y)
     if spl.extrapolation == zero
         return T(0)
     elseif spl.extrapolation == boundary
@@ -116,14 +114,16 @@ end
 
 #################### 0th-order spline ##################
 function Spline1D(x, y, spl::Spline1D{0})
-	spl.x = x
-	spl.y = y
-	spl.ilast = 1
+	resize!(spl.x, length(x))
+	resize!(spl.y, length(y))
+	spl.x .= x
+	spl.y .= y
+        spl.ilast[] = 0  # must initialize with an invalid index so that last_abcdh isn't mistakenly taken as valid
         return spl
 end
 
 
-function eval_spline_piece_unsafe(spline::Spline1D{0}, i::Integer, x::Number)
+function eval_spline_piece_unsafe(spline::Spline1D{0}, i, x)
 	@inbounds return spline.y[i]
 end
 
@@ -153,14 +153,16 @@ end
 
 #################### 1st-order spline ##################
 function Spline1D(x, y, spl::Spline1D{1})
-    spl.x = x
-    spl.y = y
-    spl.ilast = 1
+    resize!(spl.x, length(x))
+    resize!(spl.y, length(y))
+    spl.x .= x
+    spl.y .= y
+    spl.ilast[] = 0
     return spl
 end
 
 
-function eval_spline_piece_unsafe(spline::Spline1D{1}, i::Integer, x::Number)
+function eval_spline_piece_unsafe(spline::Spline1D{1}, i, x)
         xx = spline.x
         yy = spline.y
         @inbounds return yy[i] + (x - xx[i]) / (xx[i+1] - xx[i]) * (yy[i+1] - yy[i])
@@ -180,9 +182,6 @@ end
 
 
 #################### 3rd-order spline ##################
-Spline1D(x, y, spl::Spline1D{3}) = Spline1Dk3(x, y, spl.betainv, spl.ypp, spl)
-
-
 function Ai(x, y, i)
 	6(y[i+1] - y[i]) / (x[i+1] - x[i]) - 6(y[i] - y[i-1]) / (x[i] - x[i-1])
 end
@@ -215,13 +214,18 @@ end
 
 
 # for k = 3
-function Spline1Dk3(x, y, betainv, ypp, spline::Spline1D{3})
+function Spline1D(x, y, spline::Spline1D{3})
 	N = length(x)
 
-	resize!(ypp, N)
-	if length(betainv) < N-1
-		resize!(betainv, N-1)
+	resize!(spline.x, N)
+	resize!(spline.y, N)
+	resize!(spline.ypp, N)
+        resize!(spline.last_abcdh, 5)
+	if length(spline.betainv) < N-1
+		resize!(spline.betainv, N-1)
 	end
+        ypp = spline.ypp
+        betainv = spline.betainv
 
 	u = ypp  # alias for clarity
 
@@ -269,11 +273,11 @@ function Spline1Dk3(x, y, betainv, ypp, spline::Spline1D{3})
 	ypp[1] = (a22adj * ypp[2] - A2adj) / (x[2] - x[1])
 	ypp[N] = (aNNadj * ypp[N-1] - ANadj) / (x[N] - x[N-1])
 
-        spline.x = x
-	spline.y = y
-	spline.ypp = ypp
-	spline.ilast = 1
-	spline.betainv = betainv
+        spline.x .= x
+	spline.y .= y
+	spline.ypp .= ypp
+        spline.ilast[] = 0
+	spline.betainv .= betainv
 	return spline
 end
 
@@ -328,33 +332,46 @@ function findlargestsmaller(a, x, ilast::Int)
 end
 
 
-function findlargestsmaller(a, x, spline)
-    i = findlargestsmaller(a, x, spline.ilast)
-    spline.ilast = i
-    return i
-end
+findlargestsmaller(a, x, spline) = findlargestsmaller(a, x, spline.ilast[])
 
 
 function get_abcdh(spline, i, x)
 	@inbounds x0 = spline.x[i]
 	@inbounds x1 = spline.x[i+1]
 	h = x1 - x0
-	h2 = h^2
+	t = (x - x0) / h
 	@inbounds ypp0 = spline.ypp[i]
 	@inbounds ypp1 = spline.ypp[i+1]
-
-	@inbounds d = spline.y[i]
+	h2 = h^2
 	b = h2 * ypp0 / 2
 	a = h2 * (ypp1 - ypp0) / 6
-	@inbounds c = spline.y[i+1] - a - b - d
-	t = (x - x0) / h
+
+	@inbounds d = spline.y[i]
+	@inbounds y1 = spline.y[i+1]
+	@inbounds c = y1 - a - b - d
+        spline.ilast[] = i
+        spline.last_abcdh .= (a,b,c,d,h)
 	return a, b, c, d, t, h
 end
 
 
-function eval_spline_piece_unsafe(spline::Spline1D{3}, i::Integer, x::Number)
-	a, b, c, d, t, = get_abcdh(spline, i, x)
-	@evalpoly(t, d, c, b, a)
+function eval_last(spline::Spline1D{3}, i, x)
+    @inbounds a, b, c, d, h = spline.last_abcdh
+    @inbounds x0 = spline.x[i]
+    t = (x - x0) / h
+    return @evalpoly(t, d, c, b, a)
+end
+
+function eval_i(spline::Spline1D{3}, i, x)
+	a, b, c, d, t, h = get_abcdh(spline, i, x)
+	return @evalpoly(t, d, c, b, a)
+end
+
+
+function eval_spline_piece_unsafe(spline::Spline1D{3}, i, x)
+    ilast = spline.ilast[]
+    (i == ilast) && return eval_last(spline, i, x)
+    return eval_i(spline, i, x)
 end
 
 
@@ -452,6 +469,7 @@ end
 
 
 
+
 ######################## Spline1Dloglog
 # This is a specialization of Spline1Dtrans. Reason: be faster.
 struct Spline1Dloglog{Spline1DType}
@@ -497,6 +515,7 @@ evaluate(s::Spline1Dloglog, x) = begin
 end
 
 (s::Spline1Dloglog)(x) = evaluate(s, x)
+
 
 function derivative(s::Spline1Dloglog, x)
 	xt = log(x)
