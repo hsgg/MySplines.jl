@@ -1,17 +1,7 @@
 # Copyright (c) 2018 Henry S. G. Gebhardt
 
 # This is a module to calculate a Spline.
-
-# This version is based on an older version. It caches a,b,c,d,h to be faster,
-# hopefully. However, it needs to do more copying, sometimes, e.g. when
-# creating a new spline. It could be better, it could be worse. That needs to
-# be evaluated. I identify following differences:
-#   * last_abcdh
-#   * immutable struct: x, y are copied into the struct instead of replacing
-#     the struct values. This could have implications for what happends whether
-#     they are changed outside the Splines module.
-#   * lastpoly is not implemented
-
+#
 # TODO:
 # - Derivatives and integrals are not correct in extrapolation region.
 
@@ -119,6 +109,8 @@ end
 
 #################### 0th-order spline ##################
 function Spline1D(x, y, spl::Spline1D{0})
+	resize!(spl.x, length(x))
+	resize!(spl.y, length(y))
 	spl.x .= x
 	spl.y .= y
         spl.ilast[] = 0  # must initialize with an invalid index so that last_abcdh isn't mistakenly taken as valid
@@ -156,6 +148,8 @@ end
 
 #################### 1st-order spline ##################
 function Spline1D(x, y, spl::Spline1D{1})
+    resize!(spl.x, length(x))
+    resize!(spl.y, length(y))
     spl.x .= x
     spl.y .= y
     spl.ilast[] = 0
@@ -333,10 +327,7 @@ function findlargestsmaller(a, x, ilast::Int)
 end
 
 
-function findlargestsmaller(a, x, spline)
-    i = findlargestsmaller(a, x, spline.ilast[])
-    return i
-end
+findlargestsmaller(a, x, spline) = findlargestsmaller(a, x, spline.ilast[])
 
 
 function get_abcdh(spline, i, x)
