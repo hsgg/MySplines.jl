@@ -82,6 +82,14 @@ Spline1D(y; kw...) = Spline1D(0:length(y)-1, y; kw...)
 (s::Spline1D)(x) = evaluate(s, x)
 
 
+function evaluate(spline::Spline1D, x)
+    N = length(spline.x)
+    i = findlargestsmaller(spline.x, x, spline)
+    (i < 1 || i >= N) && return evaluate_past_boundary(spline, x)
+    return eval_spline_piece_unsafe(spline, i, x)
+end
+
+
 function evaluate_past_boundary(spl::Spline1D{k,T}, x::Number) where {k,T}
     idx = (x <= spl.x[1]) ? 1 : length(spl.y)
     if spl.extrapolation == zero
@@ -118,10 +126,7 @@ function Spline1D(x, y, spl::Spline1D{0})
 end
 
 
-function evaluate(spline::Spline1D{0}, x::Number)
-	M = length(spline.y)
-	i = findlargestsmaller(spline.x, x, spline)
-        (i < 1 || i > M) && return evaluate_past_boundary(spline, x)
+function eval_spline_piece_unsafe(spline::Spline1D{0}, i, x)
 	@inbounds return spline.y[i]
 end
 
@@ -158,12 +163,9 @@ function Spline1D(x, y, spl::Spline1D{1})
 end
 
 
-function evaluate(spline::Spline1D{1}, x::Number)
+function eval_spline_piece_unsafe(spline::Spline1D{1}, i, x)
         xx = spline.x
         yy = spline.y
-	M = length(yy)
-	i = findlargestsmaller(xx, x, spline)
-        (i < 1 || i > M) && return evaluate_past_boundary(spline, x)
         @inbounds return yy[i] + (x - xx[i]) / (xx[i+1] - xx[i]) * (yy[i+1] - yy[i])
 end
 
@@ -181,9 +183,6 @@ end
 
 
 #################### 3rd-order spline ##################
-Spline1D(x, y, spl::Spline1D{3}) = Spline1Dk3(x, y, spl)
-
-
 function Ai(x, y, i)
 	6(y[i+1] - y[i]) / (x[i+1] - x[i]) - 6(y[i] - y[i-1]) / (x[i] - x[i-1])
 end
@@ -216,7 +215,7 @@ end
 
 
 # for k = 3
-function Spline1Dk3(x, y, spline::Spline1D{3})
+function Spline1D(x, y, spline::Spline1D{3})
 	N = length(x)
 
 	resize!(spline.x, N)
@@ -336,7 +335,6 @@ end
 
 function findlargestsmaller(a, x, spline)
     i = findlargestsmaller(a, x, spline.ilast[])
-    #spline.ilast[] = i
     return i
 end
 
@@ -374,12 +372,10 @@ function eval_i(spline::Spline1D{3}, i, x)
 end
 
 
-function evaluate(spline::Spline1D{3}, x::Number)
-        ilast = spline.ilast[]
-        i = findlargestsmaller(spline.x, x, spline)
-        (i < 1 || i >= length(spline.x)) && return evaluate_past_boundary(spline, x)
-        (i == ilast) && return eval_last(spline, i, x)
-        return eval_i(spline, i, x)
+function eval_spline_piece_unsafe(spline::Spline1D{3}, i, x)
+    ilast = spline.ilast[]
+    (i == ilast) && return eval_last(spline, i, x)
+    return eval_i(spline, i, x)
 end
 
 
