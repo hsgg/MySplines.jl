@@ -341,27 +341,32 @@ end
 
 
 function testallocate()
-	x = 0.1:0.1:2.2
+	println("testallocate:")
+        x = 10.0 .^ (-3:0.01:1)
 	y = rand(length(x))
+
 	#s = Splines.Spline1D(x, y; k=3)
 	#s = Splines.Spline1D(3)
-	spl = Splines.Spline1D()
-	s = Splines.Spline1Dloglog(spl)
-	Splines.Spline1D(x, y, s)
-	nlnLfn(p) = begin
-		s.spline.x[5]
-		#s.x[5]
-		return 0.5
-	end
-	p0 = [0,1,2]
-	@time nlnLfn(p0)
-	@time nlnLfn(p0)
-	@time nlnLfn(p0)
-	@time nlnLfn(p0)
+	#spl = Splines.Spline1D()
+	#Splines.Spline1D(x, y, s)
+
+	#s = Splines.Spline1Dloglog(x, y)
+	s = Splines.Spline1D(x, y)
+
+        xx = rand(10000)
+
+        @time s(xx[1])
+        @time s(xx[4])
+        @time s(xx[100])
+
+        @time @. s(xx)
+        @time @. s(xx)
+        @time @. s(xx)
 end
 
 
 function testextrapolations()
+	println("testextrapolations:")
 	x = 1:0.5:4
 	y = randn(length(x))
 	s_zero = Splines.Spline1D(x, y, extrapolation=Splines.zero)
