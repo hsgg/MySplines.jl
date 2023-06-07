@@ -1,7 +1,7 @@
 name = "Splines"
 uuid = "59274c38-6050-4eab-b485-1b2b36df4d3b"
 authors = ["Henry Gebhardt <gebhardt@caltech.edu> and contributors"]
-version = "0.2.0"
+version = "0.2.1"
 
 [compat]
 julia = "1"
