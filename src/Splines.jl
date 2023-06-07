@@ -9,7 +9,6 @@
 module Splines
 
 export Spline1D, Spline1Dtrans, Spline1Dloglog
-export evaluate
 export derivative
 export integrate
 
