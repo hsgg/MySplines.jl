@@ -68,9 +68,7 @@ Spline1D(; k=3, T=Float64, extrapolation=boundary) = Spline1D{k,T}([], [], [], f
 
 Spline1D(y; kw...) = Spline1D(0:length(y)-1, y; kw...)
 
-(s::Spline1D{k,T})(x::T) where {k,T} = evaluate(s, x)
-
-(s::Spline1D)(x) = evaluate.(s, x)
+(s::Spline1D)(x) = evaluate(s, x)
 
 
 function evaluate(spline::Spline1D, x)
