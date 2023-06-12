@@ -452,6 +452,17 @@ function test_inverse()
 end
 
 
+function test_broadcast()
+    xnodes = 0.0:0.1:1
+    yvals = rand(length(xnodes))
+    spl = Splines.Spline1D(xnodes, yvals)
+    @test spl(0.72) isa Float64
+    @test spl.(0.72) isa Float64
+    #@test spl([0.72]) isa Vector{Float64}  # we don't have support for this call signature
+    @test spl.([0.72]) isa Vector{Float64}
+end
+
+
 @testset "Splines.jl" begin
     testminimal()
     testminimal_loglog()
@@ -469,4 +480,5 @@ end
     testallocate()
     testextrapolations()
     test_inverse()
+    test_broadcast()
 end
