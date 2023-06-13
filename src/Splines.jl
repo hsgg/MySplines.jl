@@ -28,17 +28,7 @@ struct Spline1D{k,T}
 end
 
 
-# To make fused loops work
-if VERSION < v"0.7.0"
-    import Base.size, Base.getindex
-    size(s::Spline1D) = (1,)
-    getindex(s::Spline1D, i) = s
-else
-    import Base.length, Base.iterate
-    length(s::Spline1D) = 1
-    iterate(s::Spline1D) = s, nothing
-    iterate(s::Spline1D, x) = nothing
-end
+Base.Broadcast.broadcastable(s::Spline1D) = Ref(s)
 
 
 ################# All splines
