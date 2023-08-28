@@ -4,7 +4,7 @@ using Test
 using Statistics
 using Random
 using Splines
-using PyPlot
+using PythonPlot
 using Profile
 
 using Dierckx
