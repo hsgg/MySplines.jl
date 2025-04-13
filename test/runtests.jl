@@ -1,9 +1,9 @@
-using Splines
+using MySplines
 using Test
 
 using Statistics
 using Random
-using Splines
+using MySplines
 using PythonPlot
 using Profile
 
@@ -14,13 +14,13 @@ using Dierckx
 
 function iterate_mine(x, y)
 	for i=1:1000
-		s = Splines.Spline1D(x,y)
+		s = MySplines.Spline1D(x,y)
 	end
 end
 
 function iterate_mine(x, y, spline)
 	for i=1:1000
-		s = Splines.Spline1D(x, y, spline)
+		s = MySplines.Spline1D(x, y, spline)
 	end
 end
 
@@ -34,7 +34,7 @@ end
 
 function iterate_mine_integrate(spline, xlo, xhi; N=1000)
 	for i=1:N
-		I = Splines.integrate(spline, xlo, xhi)
+		I = MySplines.integrate(spline, xlo, xhi)
 	end
 end
 
@@ -49,7 +49,7 @@ end
 
 function speedtester(x,y)
 	N = length(x)
-	spline = Splines.Spline1D(x, y)
+	spline = MySplines.Spline1D(x, y)
 	iterate_mine(x,y,spline)
 	@time iterate_mine(x,y,spline)
 	iterate_mine(x,y)
@@ -59,7 +59,7 @@ function speedtester(x,y)
 end
 
 function speedtester_integrate(x, y, xlo, xhi; N=1000)
-	s = Splines.Spline1D(x, y)
+	s = MySplines.Spline1D(x, y)
 	spl = Dierckx.Spline1D(x, y, bc="zero")
 	iterate_mine_integrate(s, xlo, xhi; N=N)
 	@time iterate_mine_integrate(s, xlo, xhi; N=N)
@@ -76,7 +76,7 @@ function testminimal()
 	N = 4
 	x = Array(range(0, stop=1, length=N))
 	y = rand(N)
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
 	speedtester(x, y)
@@ -95,7 +95,7 @@ function testminimal_with_derivative()
 	N = 10
 	x = Array(range(0, stop=1, length=N))
 	y = rand(N)
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
 	xx = range(-0.1, stop=1.1, length=1000)
@@ -105,7 +105,7 @@ function testminimal_with_derivative()
 	plot(xx, spl.(xx), color="0.85")
 	for i=1:4
 		xderiv = rand()
-		yderiv = Splines.derivative(s, xderiv)
+		yderiv = MySplines.derivative(s, xderiv)
 		xxd = range(xderiv - 0.05, stop=xderiv + 0.05, length=50)
 		yyd = @. yderiv * (xxd - xderiv) + s(xderiv)
 		plot(xxd, yyd, color="b", ls="--")
@@ -118,10 +118,10 @@ function testminimal_loglog()
 	N = 10
 	x = Array(range(0.1, stop=1, length=N))
 	y = 0.1 .+ rand(N)
-	s = Splines.Spline1Dloglog(x,y)
-	s1 = Splines.Spline1Dtrans(x,y,log,identity)
-	s2 = Splines.Spline1Dtrans(x,y,identity,log)
-	spl = Splines.Spline1D(x,y)
+	s = MySplines.Spline1Dloglog(x,y)
+	s1 = MySplines.Spline1Dtrans(x,y,log,identity)
+	s2 = MySplines.Spline1Dtrans(x,y,identity,log)
+	spl = MySplines.Spline1D(x,y)
 
 	xx = range(0.05, stop=1.1, length=1000)
 	figure()
@@ -139,8 +139,8 @@ function testminimal_k0()
 	N = 10
 	x = Array(range(0, stop=1, length=N+1))
 	y = rand(N)
-	s0 = Splines.Spline1D(x,y; k=0)
-	#s3 = Splines.Spline1D(x,y)
+	s0 = MySplines.Spline1D(x,y; k=0)
+	#s3 = MySplines.Spline1D(x,y)
 
 	xx = range(-0.1, stop=1.1, length=1000)
 	figure()
@@ -157,10 +157,10 @@ function testminimal_k0_loglog()
 	#x = Array(range(0.1, stop=1, length=N+1))
 	x = Array(10 .^ range(log10(0.1), stop=log10(1), length=N+1))
 	y = 0.1 .+ rand(N)
-	s0 = Splines.Spline1Dloglog(x,y,k=0)
-	s1 = Splines.Spline1Dtrans(x,y,log,identity,k=0)
-	s2 = Splines.Spline1Dtrans(x,y,identity,log,k=0)
-	s3 = Splines.Spline1Dtrans(x,y,identity,identity,k=0)
+	s0 = MySplines.Spline1Dloglog(x,y,k=0)
+	s1 = MySplines.Spline1Dtrans(x,y,log,identity,k=0)
+	s2 = MySplines.Spline1Dtrans(x,y,identity,log,k=0)
+	s3 = MySplines.Spline1Dtrans(x,y,identity,identity,k=0)
 
 	xx = range(0.05, stop=1.1, length=1000)
 	figure()
@@ -178,15 +178,15 @@ function testminimal_k1()
 	N = 10
 	x = Array(range(0, stop=1, length=N))
 	y = rand(N)
-	s1 = Splines.Spline1D(x,y; k=1)
-	#s3 = Splines.Spline1D(x,y)
+	s1 = MySplines.Spline1D(x,y; k=1)
+	#s3 = MySplines.Spline1D(x,y)
 
 	xx = range(-0.1, stop=1.1, length=1000)
-	Splines.derivative.(s1, xx)
+	MySplines.derivative.(s1, xx)
 	figure()
 	scatter(x, y)
 	plot(xx, s1.(xx), label="1st-order")
-	plot(xx, Splines.derivative.(s1, xx), label="1st-order derivative")
+	plot(xx, MySplines.derivative.(s1, xx), label="1st-order derivative")
 	#plot(xx, s3.(xx), label="3rd-order")
 	#ylim(-0.1,1.1)
 	legend()
@@ -199,7 +199,7 @@ function testrand()
 	Random.seed!(4)
 	x = Array(range(0, stop=1, length=N))
 	y = rand(N)
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
 	speedtester(x, y)
@@ -224,7 +224,7 @@ function testoox()
 	x[1:2] = [0.02, 0.03]
 	x[3:N] = range(0.04, stop=1, length=N-2)
 	y = 1 ./ x
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
 	speedtester(x, y)
@@ -248,7 +248,7 @@ function testgauss()
 	N = 10
 	x = Array(range(-1, stop=1, length=N))
 	y = @. exp(-x^2 / 0.1^2)
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
 	speedtester(x, y)
@@ -271,7 +271,7 @@ function testlargearray()
 	N = 1000
 	x = Array(range(-1, stop=1, length=N))
 	y = @. exp(-x^2 / 0.1^2)
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
 	speedtester(x, y)
@@ -302,10 +302,10 @@ function testintegrate()
 	N = 500
 	x = Array{Float64,1}(range(-1, stop=1, length=N))
 	y = @. exp(-x^2 / 0.3^2)
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
-	println(Splines.integrate(s, -0.9, 0.8))
+	println(MySplines.integrate(s, -0.9, 0.8))
 	println(Dierckx.integrate(spl, -0.9, 0.8))
 
 	speedtester_integrate(x, y, -0.9, 0.8; N=100000)
@@ -325,12 +325,12 @@ function testintegrate_beyondbndry()
 	N = 10
 	x = Array(range(-1, stop=1, length=N))
 	y = rand(N)
-	s = Splines.Spline1D(x,y)
+	s = MySplines.Spline1D(x,y)
 	spl = Dierckx.Spline1D(x,y,bc="zero")
 
-	I = Splines.integrate(s, -1.9, 1.4)
-	I = Splines.integrate(s, 1.1, 1.4)
-	I = Splines.integrate(s, -1.8, -1.4)
+	I = MySplines.integrate(s, -1.9, 1.4)
+	I = MySplines.integrate(s, 1.1, 1.4)
+	I = MySplines.integrate(s, -1.8, -1.4)
 
 	xx = range(-1.1, stop=1.1, length=1000)
 	figure()
@@ -345,13 +345,13 @@ function testallocate()
         x = 10.0 .^ (-3:0.01:1)
 	y = rand(length(x))
 
-	#s = Splines.Spline1D(x, y; k=3)
-	#s = Splines.Spline1D(3)
-	#spl = Splines.Spline1D()
-	#Splines.Spline1D(x, y, s)
+	#s = MySplines.Spline1D(x, y; k=3)
+	#s = MySplines.Spline1D(3)
+	#spl = MySplines.Spline1D()
+	#MySplines.Spline1D(x, y, s)
 
-	#s = Splines.Spline1Dloglog(x, y)
-	s = Splines.Spline1D(x, y)
+	#s = MySplines.Spline1Dloglog(x, y)
+	s = MySplines.Spline1D(x, y)
 
         xx = rand(10000)
 
@@ -369,10 +369,10 @@ function testextrapolations()
 	println("testextrapolations:")
 	x = 1:0.5:4
 	y = randn(length(x))
-	s_zero = Splines.Spline1D(x, y, extrapolation=Splines.zero)
-	s_boundary = Splines.Spline1D(x, y, extrapolation=Splines.boundary)
-	s_linear = Splines.Spline1D(x, y, extrapolation=Splines.linear)
-	s_powerlaw = Splines.Spline1D(x, y, extrapolation=Splines.powerlaw)
+	s_zero = MySplines.Spline1D(x, y, extrapolation=MySplines.zero)
+	s_boundary = MySplines.Spline1D(x, y, extrapolation=MySplines.boundary)
+	s_linear = MySplines.Spline1D(x, y, extrapolation=MySplines.linear)
+	s_powerlaw = MySplines.Spline1D(x, y, extrapolation=MySplines.powerlaw)
 
 	xx = 0:0.01:5
 	figure()
@@ -396,8 +396,8 @@ function test_inverse()
     z = [0.11109999999999996, 0.36915874194714393, 0.7333961254531127, 1.2287736648072456]
     r = [324.3780626283167, 1008.6025862083494, 1815.1139372153434, 2665.022835526069]
 
-    szr = Splines.Spline1D(z, r, extrapolation=Splines.linear)
-    srz = Splines.Spline1D(r, z, extrapolation=Splines.linear)
+    szr = MySplines.Spline1D(z, r, extrapolation=MySplines.linear)
+    srz = MySplines.Spline1D(r, z, extrapolation=MySplines.linear)
 
 
     #zz1 = 0.0:0.01:1.5
@@ -455,7 +455,7 @@ end
 function test_broadcast()
     xnodes = 0.0:0.1:1
     yvals = rand(length(xnodes))
-    spl = Splines.Spline1D(xnodes, yvals)
+    spl = MySplines.Spline1D(xnodes, yvals)
     @test spl(0.72) isa Float64
     @test spl.(0.72) isa Float64
     #@test spl([0.72]) isa Vector{Float64}  # we don't have support for this call signature
@@ -463,7 +463,7 @@ function test_broadcast()
 end
 
 
-@testset "Splines.jl" begin
+@testset "MySplines.jl" begin
     testminimal()
     testminimal_loglog()
     testminimal_with_derivative()

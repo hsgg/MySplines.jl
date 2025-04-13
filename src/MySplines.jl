@@ -6,7 +6,7 @@
 # - Derivatives and integrals are not correct in extrapolation region.
 
 
-module Splines
+module MySplines
 
 export Spline1D, Spline1Dtrans, Spline1Dloglog
 export derivative
