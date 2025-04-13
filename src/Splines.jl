@@ -14,6 +14,10 @@ export integrate
 
 #using TimerOutputs
 
+function __init__()
+    @warn "This package is now named `MySplines.jl`. Other than the name, the interface is the same."
+end
+
 
 @enum ExtrapolationType zero=0 boundary=1 linear=2 powerlaw=3 lastpoly=4
 
