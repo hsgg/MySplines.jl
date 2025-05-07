@@ -1,5 +1,6 @@
 name = "MySplines"
-uuid = "59274c38-6050-4eab-b485-1b2b36df4d3b"
+#uuid = "59274c38-6050-4eab-b485-1b2b36df4d3b"
+uuid = "b11459bf-4609-2264-00dc-5ebba822f00d"
 authors = ["Henry Gebhardt <hsggebhardt@fastmail.com>"]
 version = "1.0.0"
 
