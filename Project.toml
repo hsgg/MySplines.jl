@@ -1,6 +1,6 @@
 name = "MySplines"
 uuid = "59274c38-6050-4eab-b485-1b2b36df4d3b"
-authors = ["Henry Gebhardt <hsggebhardt@fastmail.com> and contributors"]
+authors = ["Henry Gebhardt <hsggebhardt@fastmail.com>"]
 version = "1.0.0"
 
 [compat]
